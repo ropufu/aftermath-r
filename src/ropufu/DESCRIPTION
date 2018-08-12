@@ -1,0 +1,11 @@
+Package: ropufu
+Title: Collection of Simple Functions
+Version: 0.0.0.9000
+Authors@R: person("Grigory", "Sokolov", email = "gsokolov@binghamton.edu", role = c("aut", "cre"))
+Description: What the package does (one paragraph).
+Depends:
+    devtools, roxygen2, R (>= 3.3.1)
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.0
