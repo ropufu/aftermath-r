@@ -12,43 +12,44 @@
 sas.glm <- function(x, y, cl = 0.95, m = 100, fill.col = rgb(0,0,0,0.1), ...) 
 {
   n <- length(x);
-  x.ssq <- sum(x * x);
-  y.ssq <- sum(y * y);
   
-  a <- cor(x, y) * sd(y) / sd(x);
-  b <- mean(y) - (a) * mean(x);
-  predict.y <- function (xi) a * xi + b;
+  a.hat <- cor(x, y) * sd(y) / sd(x); # Estimated slope.
+  b.hat <- mean(y) - (a.hat) * mean(x); # Estimated intercept.
+  predict.y <- function (xi) a.hat * xi + b.hat; # Prediction function.
   
   
   residual <- y - predict.y(x);
   residual.ssq <- sum(residual * residual);
-  err.sd <- sqrt(residual.ssq / (n - 2)); # Estimator of the sd(error).
+  sigma.hat <- sqrt(residual.ssq / (n - 2)); # Estimator of sd(error).
   
-  a.se <- err.sd * sqrt(1 / ((n - 1) * var(x))); # Estimator of the standard deviation of the estimator of a.
-  b.se <- err.sd * sqrt((1 / n) + (mean(x) ^ 2) / ((n - 1) * var(x))); # Estimator of the standard deviation of the estimator of b.
-  
-  xi <- seq(from = min(x), to = max(x), length.out = m); # Where we evaluate predictions.
-  predict.mean.se <- err.sd * sqrt((1 / n) + (xi - mean(x)) ^ 2 / ((n - 1) * var(x)));
-  predict.one.se <- err.sd * sqrt(1 + (1 / n) + (xi - mean(x)) ^ 2 / ((n - 1) * var(x)));
+  a.se <- sigma.hat * sqrt(1 / ((n - 1) * var(x))); # Estimator of sd(a.hat).
+  b.se <- sigma.hat * sqrt((1 / n) + (mean(x) ^ 2) / ((n - 1) * var(x))); # Estimator of sd(b.hat).
   
   
-  # ~~ Plot for the last simulation ~~
-  plot(x, y, col = "transparent", ...);
+  x.plot <- seq(from = min(x), to = max(x), length.out = m); # Where we evaluate predictions.
+  y.plot <- predict.y(x.plot); # Predicted point values.
+  predict.mean.se <- sigma.hat * sqrt((1 / n) + (x.plot - mean(x)) ^ 2 / ((n - 1) * var(x))); # Estimator of the sd of the mean predictor.
+  predict.one.se <- sigma.hat * sqrt(1 + (1 / n) + (x.plot - mean(x)) ^ 2 / ((n - 1) * var(x))); # Estimator of the sd of the point predictor.
   
-  t <- qt(1 - (1 - cl) / 2, n - 2);
-  # ~~ Confidence intervals for mean ~~
-  lines(xi, predict.y(xi) + t * predict.mean.se, lty=3, col="gray") # Confidence intervals.
-  lines(xi, predict.y(xi) - t * predict.mean.se, lty=3, col="gray") # Confidence intervals.
-  polygon(c(xi, rev(xi)),
-          c(predict.y(xi) + t * predict.mean.se, rev(predict.y(xi) - t * predict.mean.se)),
-          col = fill.col,
-          border = NA);
-  # ~~ Confidence intervals for individual ~~
-  lines(xi, predict.y(xi) + t * predict.one.se, lty=2, col="gray") # Confidence intervals.
-  lines(xi, predict.y(xi) - t * predict.one.se, lty=2, col="gray") # Confidence intervals.
+  
+  # ~~ Create plot ~~
+  plot(range(x), range(y), col = "transparent", xlab = "", ylab = "", ...);
+  
+  t <- stats::qt(1 - (1 - cl) / 2, n - 2);
+  # ~~ Confidence intervals for mean predictor ~~
+  ropufu::fill.plot(
+    x.plot, y.plot + t * predict.mean.se,
+    x.plot, y.plot - t * predict.mean.se,
+    col = fill.col, border = NA);
+  lines(x.plot, y.plot + t * predict.mean.se, lty=3, col="gray") # Confidence intervals.
+  lines(x.plot, y.plot - t * predict.mean.se, lty=3, col="gray") # Confidence intervals.
+  # ~~ Confidence intervals for point predictor ~~
+  lines(x.plot, y.plot + t * predict.one.se, lty=2, col="gray") # Confidence intervals.
+  lines(x.plot, y.plot - t * predict.one.se, lty=2, col="gray") # Confidence intervals.
   
   # ~~ Regression line ~~
-  abline(b, a, untf = FALSE, lty = 1);
+  abline(b.hat, a.hat, untf = FALSE, lty = 1);
   
+  # ~~ Observed values ~~
   points(x, y);
 }
