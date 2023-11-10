@@ -27,9 +27,8 @@ sas.glm <- function(x, y, cl = 0.95, m = 100, fill.col = rgb(0,0,0,0.1), ...)
   
   
   x.plot <- seq(from = min(x), to = max(x), length.out = m); # Where we evaluate predictions.
-  y.plot <- predict.y(x.plot); # Predicted point values.
-  predict.mean.se <- sigma.hat * sqrt((1 / n) + (x.plot - mean(x)) ^ 2 / ((n - 1) * var(x))); # Estimator of the sd of the mean predictor.
-  predict.one.se <- sigma.hat * sqrt(1 + (1 / n) + (x.plot - mean(x)) ^ 2 / ((n - 1) * var(x))); # Estimator of the sd of the point predictor.
+  predict.mean.se <- function (xi) sigma.hat * sqrt((1 / n) + (xi - mean(x)) ^ 2 / ((n - 1) * var(x))); # Estimator of the sd of the mean predictor.
+  predict.one.se <- function (xi) sigma.hat * sqrt(1 + (1 / n) + (xi - mean(x)) ^ 2 / ((n - 1) * var(x))); # Estimator of the sd of the point predictor.
   
   
   # ~~ Create plot ~~
@@ -38,18 +37,23 @@ sas.glm <- function(x, y, cl = 0.95, m = 100, fill.col = rgb(0,0,0,0.1), ...)
   t <- stats::qt(1 - (1 - cl) / 2, n - 2);
   # ~~ Confidence intervals for mean predictor ~~
   ropufu::fill.plot(
-    x.plot, y.plot + t * predict.mean.se,
-    x.plot, y.plot - t * predict.mean.se,
+    x.plot, predict.y(x.plot) + t * predict.mean.se(x.plot),
+    x.plot, predict.y(x.plot) - t * predict.mean.se(x.plot),
     col = fill.col, border = NA);
-  lines(x.plot, y.plot + t * predict.mean.se, lty=3, col="gray") # Confidence intervals.
-  lines(x.plot, y.plot - t * predict.mean.se, lty=3, col="gray") # Confidence intervals.
+  lines(x.plot, predict.y(x.plot) + t * predict.mean.se(x.plot), lty=3, col="gray") # Confidence intervals.
+  lines(x.plot, predict.y(x.plot) - t * predict.mean.se(x.plot), lty=3, col="gray") # Confidence intervals.
   # ~~ Confidence intervals for point predictor ~~
-  lines(x.plot, y.plot + t * predict.one.se, lty=2, col="gray") # Confidence intervals.
-  lines(x.plot, y.plot - t * predict.one.se, lty=2, col="gray") # Confidence intervals.
+  lines(x.plot, predict.y(x.plot) + t * predict.one.se(x.plot), lty=2, col="gray") # Confidence intervals.
+  lines(x.plot, predict.y(x.plot) - t * predict.one.se(x.plot), lty=2, col="gray") # Confidence intervals.
   
   # ~~ Regression line ~~
   abline(b.hat, a.hat, untf = FALSE, lty = 1);
   
   # ~~ Observed values ~~
   points(x, y);
+  return(list(
+    y = predict.y,
+    mean.se = predict.mean.se,
+    one.se = predict.one.se
+  ));
 }
